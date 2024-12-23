@@ -59,7 +59,7 @@ The trained model is saved in a file (e.g., `model.h5`) and can be reloaded for 
 1. **Clone the repository:**
     ```bash
     git clone https://github.com/AnT2003/Identification-System-using-Face-Recognition.git
-    cd face-recognition-flask
+    cd Identification-System-using-Face-Recognition
     ```
 
 2. **Install the required dependencies:**
