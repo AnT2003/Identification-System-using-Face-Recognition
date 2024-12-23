@@ -1,0 +1,5 @@
+Flask
+numpy
+face_recognition
+scikit-learn
+tensorflow

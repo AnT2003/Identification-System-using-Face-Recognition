@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin: 0 5px;
+            outline: none;
+        }
+
+        .tab-button.active {
+            background: #0056b3;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: #fff;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        label {
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #loader {
+            display: none;
+            margin: 20px auto;
+            font-size: 1.2rem;
+            color: #007BFF;
+        }
+
+        #result-container {
+            margin-top: 20px;
+            background: #e7f5ff;
+            border: 1px solid #007BFF;
+            border-radius: 10px;
+            padding: 15px;
+            display: none;
+            text-align: left;
+        }
+
+        .result {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .result strong {
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+    <h1>Face Recognition Application</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-button active" data-tab="train-tab">Train Model</button>
+        <button class="tab-button" data-tab="predict-tab">Predict Face</button>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="train-tab" class="tab-content active">
+        <h2>Train a New Model</h2>
+        <form id="train-form">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" placeholder="Enter name" required>
+            <label for="id">ID:</label>
+            <input type="text" id="id" name="id" placeholder="Enter ID" required>
+            <label for="images">Upload Images:</label>
+            <input type="file" id="images" name="images" multiple accept="image/*" required>
+            <button type="submit">Train Model</button>
+        </form>
+    </div>
+
+    <div id="predict-tab" class="tab-content">
+        <h2>Predict Face</h2>
+        <form id="predict-form">
+            <label for="image">Upload an Image:</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+            <button type="submit">Predict</button>
+        </form>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader">Processing, please wait...</div>
+
+    <!-- Result Container -->
+    <div id="result-container">
+        <h3>Result</h3>
+        <div id="result-content" class="result"></div>
+    </div>
+
+    <script>
+        const tabs = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const loader = document.getElementById('loader');
+        const resultContainer = document.getElementById('result-container');
+        const resultContent = document.getElementById('result-content');
+
+        // Tab Switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        function showLoader() {
+            loader.style.display = 'block';
+            resultContainer.style.display = 'none';
+        }
+
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
+
+        function showResult(resultHTML) {
+            resultContent.innerHTML = resultHTML;
+            resultContainer.style.display = 'block';
+        }
+
+        // Handle Train Model Form Submission
+        document.getElementById('train-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoader();
+
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('/train', { method: 'POST', body: formData });
+                const result = await response.json();
+                hideLoader();
+                if (result.error) {
+                    showResult(`<strong>Error:</strong> ${result.error}`);
+                } else {
+                    showResult('<strong>Success:</strong> Model trained successfully.');
+                }
+            } catch (err) {
+                hideLoader();
+                showResult('<strong>Error:</strong> Unable to train the model.');
+            }
+        });
+
+        // Handle Predict Form Submission
+        document.getElementById('predict-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoader();
+
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch('/predict', { method: 'POST', body: formData });
+                const result = await response.json();
+                hideLoader();
+                if (result.error) {
+                    showResult(`<strong>Error:</strong> ${result.error}`);
+                } else {
+                    const predictions = result.predictions.map((p, i) => `
+                        <div>
+                            <strong>Prediction ${i + 1}:</strong><br>
+                            Name: ${p.name}<br>
+                            ID: ${p.id}<br>
+                            Accuracy: ${p.accuracy.toFixed(2)}%<br>
+                            Bounding Box: Top ${p.bounding_box.top}, Right ${p.bounding_box.right}, Bottom ${p.bounding_box.bottom}, Left ${p.bounding_box.left}
+                        </div>
+                    `).join('<br>');
+                    showResult(predictions);
+                }
+            } catch (err) {
+                hideLoader();
+                showResult('<strong>Error:</strong> Unable to predict the image.');
+            }
+        });
+    </script>
+</body>
+</html>
